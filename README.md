@@ -2,7 +2,7 @@
 
 A training center manager for computer training centers and coaching centers, as an Android app and a web app that share the same records. Admissions, fees and money receipts, dues with WhatsApp reminders, attendance, exams and results, certificates and ID cards, enquiries, expenses, instructor pay and profit reports.
 
-The owner creates the center and adds staff by their Google email. Everyone works on the same records from their own phone or browser, each with what their role allows. Any number of centers can use it; each center sees only its own records.
+The owner creates the center and adds staff by their Google email. Everyone works on the same records from their own phone or browser, each with what their role allows. Several centers can use it; each center sees only its own records. New centers need the SkillTrack owner's approval: anyone else who taps "Create a center" sends a request instead, and gets the form once it's approved.
 
 **[Download the latest APK](https://github.com/ocpabdurrahim/skilltrack/releases/latest)** (Android 8.0 or newer) · **[Open the web app](https://skilltrack-058fd.web.app)**
 

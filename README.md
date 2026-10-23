@@ -6,6 +6,22 @@ The owner creates the center and adds staff by their Google email. Everyone work
 
 **[Download the latest APK](https://github.com/ocpabdurrahim/skilltrack/releases/latest)** (Android 8.0 or newer) · **[Open the web app](https://skilltrack-058fd.web.app)**
 
+| Home | Student | Batch |
+|---|---|---|
+| <img src="docs/screenshots/home.png" width="240" alt="Home dashboard"> | <img src="docs/screenshots/student.png" width="240" alt="A student's page"> | <img src="docs/screenshots/batch.png" width="240" alt="A batch"> |
+| **Attendance** | **Results** | **Money receipt** |
+| <img src="docs/screenshots/attendance.png" width="240" alt="Marking attendance"> | <img src="docs/screenshots/results.png" width="240" alt="Results with grades and positions"> | <img src="docs/screenshots/receipt.png" width="240" alt="A money receipt"> |
+| **Dues** | **Reports** | **Dark theme** |
+| <img src="docs/screenshots/dues.png" width="240" alt="Dues with reminders"> | <img src="docs/screenshots/reports.png" width="240" alt="Income, spending and profit"> | <img src="docs/screenshots/home-dark.png" width="240" alt="Home in the dark theme"> |
+
+On the web:
+
+| Batch results | Printable receipt |
+|---|---|
+| <img src="docs/screenshots/web-batch-results.jpg" width="400" alt="Batch results on the web"> | <img src="docs/screenshots/web-receipt.jpg" width="400" alt="Money receipt print view"> |
+
+*The phone screenshots are taken automatically by CI on an Android 14 emulator, using sample data.*
+
 ## Features
 
 - **Students:** a profile with photo, parents, phone, education and NID or birth registration number. Student IDs (`ST-2026-0001`) are given automatically. Search by name, ID or phone. Export to CSV.

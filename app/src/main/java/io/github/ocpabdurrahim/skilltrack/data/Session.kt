@@ -151,7 +151,7 @@ class SessionManager(
         batch.set(centerRef.collection("members").document(email), owner.fields() + CenterStore.live())
         val commit = batch.commit()
         // Wait for the server when online, so a refusal shows up here; offline it stays queued.
-        withContext(Dispatchers.IO) { withTimeoutOrNull(15_000) { commit.await() } }
+        withContext(Dispatchers.IO) { withTimeoutOrNull(30_000) { commit.await() } }
         enter(id)
     }
 

@@ -37,9 +37,9 @@ val emulatorHost: String get() = BuildConfig.FIREBASE_EMULATOR_HOST
 
 val data: CenterData get() = container.store.data.value
 
-/** Default device settings (no PIN, no auto-update) and nobody signed in. */
+/** Default device settings (no PIN) and nobody signed in. */
 fun resetApp() {
-    runBlocking { container.settings.update { Settings(autoUpdate = false) } }
+    runBlocking { container.settings.update { Settings() } }
     container.session.signOut()
     Firebase.auth.signOut()
 }

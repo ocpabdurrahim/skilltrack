@@ -1,5 +1,6 @@
 package io.github.ocpabdurrahim.skilltrack.ui.batches
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -169,6 +170,7 @@ fun AttendanceScreen(batchId: String, initialDate: String?) {
             Button(
                 enabled = roll.isNotEmpty() && data.role.academic,
                 onClick = {
+                    Log.i("SkillTrack", "Saving attendance for $batchId on $date")
                     val saved = Attendance(
                         id = recordId, batchId = batchId, date = date,
                         marks = roll.associate { it.id to (marks[it.id] ?: Mark.PRESENT) },

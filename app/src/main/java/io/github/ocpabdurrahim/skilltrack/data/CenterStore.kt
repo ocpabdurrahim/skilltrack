@@ -87,6 +87,8 @@ class CenterStore {
     private var error: String? = null
     private var ready = false
     private var seeded = false
+    /** How often the staff list was refused in a row (see the members listener). */
+    private var deniedRetries = 0
 
     val currentCenterId: String? get() = centerId
 
@@ -112,8 +114,14 @@ class CenterStore {
         registrations += centerRef.collection("members").addSnapshotListener(MetadataChanges.INCLUDE) { snap, err ->
             if (gen != generation) return@addSnapshotListener
             if (err != null) {
-                // Not (or no longer) on this center's staff.
+                // Not (or no longer) on this center's staff, or a just-created
+                // staff record has not reached the server yet: look again a few times.
                 if (err.code == FirebaseFirestoreException.Code.PERMISSION_DENIED) {
+                    if (deniedRetries < 3) {
+                        deniedRetries++
+                        main.postDelayed({ if (gen == generation) reload(keepRetries = true) }, 2_000L * deniedRetries)
+                        return@addSnapshotListener
+                    }
                     access = Access.NONE
                     stopData()
                     publish()
@@ -128,7 +136,10 @@ class CenterStore {
                 val d = doc.getData(DocumentSnapshot.ServerTimestampBehavior.ESTIMATE)
                 if (d["deleted"] == true) members.remove(doc.id) else members[doc.id] = Member.from(doc.id, d)
             }
-            if (!snap.metadata.isFromCache) membersFromServer = true
+            if (!snap.metadata.isFromCache) {
+                membersFromServer = true
+                deniedRetries = 0
+            }
             onMembership(gen)
             publish()
         }
@@ -137,10 +148,12 @@ class CenterStore {
     fun stop() = onMain { stopInternal() }
 
     /** Starts again from the local cache, e.g. after the server turned a write down. */
-    private fun reload() {
+    private fun reload(keepRetries: Boolean = false) {
         val c = centerId ?: return
         val e = email
+        val retries = deniedRetries
         stopInternal()
+        if (keepRetries) deniedRetries = retries
         start(c, e)
     }
 
@@ -161,6 +174,7 @@ class CenterStore {
         error = null
         ready = false
         seeded = false
+        deniedRetries = 0
         centerId = null
         email = ""
         _data.value = CenterData.EMPTY

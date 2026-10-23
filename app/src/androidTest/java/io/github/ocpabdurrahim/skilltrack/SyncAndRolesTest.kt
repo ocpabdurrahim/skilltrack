@@ -13,7 +13,6 @@ import io.github.ocpabdurrahim.skilltrack.data.Session
 import io.github.ocpabdurrahim.skilltrack.data.Student
 import io.github.ocpabdurrahim.skilltrack.ui.auth.emulatorSignIn
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -40,11 +39,6 @@ class SyncAndRolesTest {
     fun setUp() {
         assumeTrue("Needs a build pointed at the Firebase emulators", emulatorHost.isNotEmpty())
         resetApp()
-    }
-
-    @After
-    fun tearDown() {
-        if (emulatorHost.isNotEmpty()) resetApp()
     }
 
     @Test

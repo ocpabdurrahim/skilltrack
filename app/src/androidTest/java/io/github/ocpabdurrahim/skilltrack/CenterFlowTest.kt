@@ -1,16 +1,17 @@
 package io.github.ocpabdurrahim.skilltrack
 
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.ocpabdurrahim.skilltrack.data.EnrollmentStatus
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -31,11 +32,6 @@ class CenterFlowTest {
     fun setUp() {
         assumeTrue("Needs a build pointed at the Firebase emulators", emulatorHost.isNotEmpty())
         resetApp()
-    }
-
-    @After
-    fun tearDown() {
-        if (emulatorHost.isNotEmpty()) resetApp()
     }
 
     private fun tap(tag: String) {
@@ -121,7 +117,8 @@ class CenterFlowTest {
         tapInList("batch_row")
         tapInList("batch_attendance")
         compose.waitForTag("mark_row")
-        tapInList("save_attendance")
+        compose.waitForIdle()
+        compose.onNodeWithTag("save_attendance").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForTag("batch_tab_1")
         compose.onNodeWithTag("batch_tab_1").performClick()
         compose.waitForText("Present 1 of 1")

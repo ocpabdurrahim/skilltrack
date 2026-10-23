@@ -11,7 +11,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.ocpabdurrahim.skilltrack.data.ThemeMode
 import io.github.ocpabdurrahim.skilltrack.domain.Pin
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -31,11 +30,6 @@ class ScreenshotTour {
     fun setUp() {
         assumeTrue("Needs a build pointed at the Firebase emulators", emulatorHost.isNotEmpty())
         resetApp()
-    }
-
-    @After
-    fun tearDown() {
-        if (emulatorHost.isNotEmpty()) resetApp()
     }
 
     private fun shot(name: String) {

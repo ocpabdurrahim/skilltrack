@@ -89,6 +89,8 @@ class CenterStore {
     private var seeded = false
     /** How often the staff list was refused in a row (see the members listener). */
     private var deniedRetries = 0
+    /** [deniedRetries] handed from [reload] to the next [start]. */
+    private var carriedRetries = 0
 
     val currentCenterId: String? get() = centerId
 
@@ -97,6 +99,8 @@ class CenterStore {
     fun start(centerId: String, email: String) = onMain {
         if (this.centerId == centerId && this.email == email) return@onMain
         stopInternal()
+        deniedRetries = carriedRetries
+        carriedRetries = 0
         this.centerId = centerId
         this.email = email
         val gen = generation
@@ -151,9 +155,8 @@ class CenterStore {
     private fun reload(keepRetries: Boolean = false) {
         val c = centerId ?: return
         val e = email
-        val retries = deniedRetries
+        carriedRetries = if (keepRetries) deniedRetries else 0
         stopInternal()
-        if (keepRetries) deniedRetries = retries
         start(c, e)
     }
 

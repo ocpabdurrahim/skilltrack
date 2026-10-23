@@ -4,6 +4,7 @@ import {
 } from 'firebase/auth'
 import { createContext, lazy, Suspense, useContext, useEffect, useState } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { askToCreate, isAppOwner, watchAccess, watchRequests, type CenterRequest, type CreateAccess } from '../data/approvals'
 import { createCenter, findCenters, lastCenter, rememberCenter, type CenterChoice } from '../data/centers'
 import { store, useData } from '../data/store'
 import { ROLE_LABELS, type Role } from '../data/types'
@@ -33,6 +34,7 @@ const StaffPage = lazy(() => import('./pages/Staff'))
 const SettingsPage = lazy(() => import('./pages/Settings'))
 const MorePage = lazy(() => import('./pages/More'))
 const PrintPage = lazy(() => import('./print/Print'))
+const ApprovalsPage = lazy(() => import('./pages/Approvals'))
 
 const FirebaseContext = createContext<FirebaseHandles | null>(null)
 
@@ -143,7 +145,10 @@ function CenterGate({ user }: { user: User }) {
   const [error, setError] = useState<string | null>(null)
   const [current, setCurrent] = useState<{ id: string; role: Role } | null>(null)
   const [creating, setCreating] = useState(false)
+  const [reviewing, setReviewing] = useState(false)
   const [reload, setReload] = useState(0)
+  const appOwner = isAppOwner(email)
+  const waiting = useWaitingRequests(appOwner)
 
   useEffect(() => {
     let live = true
@@ -190,12 +195,24 @@ function CenterGate({ user }: { user: User }) {
     )
   }
   if (!choices) return <Spinner />
+  if (reviewing) {
+    return (
+      <div style={{ maxWidth: 980, margin: '0 auto' }}>
+        <Suspense fallback={<Spinner />}><ApprovalsPage me={email} onBack={() => setReviewing(false)} /></Suspense>
+      </div>
+    )
+  }
   return (
     <div className="center-screen">
       <div className="picker stack">
         <div className="row"><LogoMark /><h1 style={{ margin: 0, fontSize: 24 }} className="grow">SkillTrack</h1>
           <button className="btn text" onClick={() => signOut(auth)}><Icon name="logout" size={18} />Sign out</button></div>
         <div className="muted small">Signed in as {email}</div>
+        {appOwner && !creating && (
+          <button className="btn tonal" onClick={() => setReviewing(true)} data-testid="open-approvals">
+            <Icon name="check" size={18} />Center requests{waiting > 0 ? ` (${waiting} waiting)` : ''}
+          </button>
+        )}
         {choices.length > 0 && !creating && (
           <div className="card list">
             <div className="card-head"><h2>Your centers</h2></div>
@@ -213,7 +230,7 @@ function CenterGate({ user }: { user: User }) {
             <h2>Welcome</h2>
             <p className="muted">If your center already uses SkillTrack, ask its owner to add <b>{email}</b> under Staff, then
               <button className="btn text small" onClick={() => setReload(n => n + 1)}>check again</button>.</p>
-            <p className="muted">Or set up your own center now — you'll be its owner.</p>
+            <p className="muted">Or start your own center: you'll be its owner{appOwner ? '' : ' once the SkillTrack owner approves it'}.</p>
             <button className="btn" onClick={() => setCreating(true)} data-testid="create-center">Create a center</button>
           </div>
         )}
@@ -221,8 +238,100 @@ function CenterGate({ user }: { user: User }) {
           <button className="btn tonal" onClick={() => setCreating(true)}><Icon name="plus" size={18} />Create another center</button>
         )}
         {creating && (
-          <CreateCenter user={user} onCancel={() => setCreating(false)} onCreated={id => { setCreating(false); setCurrent({ id, role: 'OWNER' }) }} />
+          <NewCenter user={user} onCancel={() => setCreating(false)} onCreated={id => { setCreating(false); setCurrent({ id, role: 'OWNER' }) }} />
         )}
+      </div>
+    </div>
+  )
+}
+
+/** How many center requests wait for an answer (the app owner's picker). */
+function useWaitingRequests(appOwner: boolean): number {
+  const { db } = useFirebase()
+  const [waiting, setWaiting] = useState(0)
+  useEffect(() => (appOwner ? watchRequests(db, list => setWaiting(list.filter(r => r.status === 'PENDING').length)) : undefined), [db, appOwner])
+  return waiting
+}
+
+/**
+ * "Create a center": the form for the app owner and approved people; everyone
+ * else asks first, and the form appears by itself once they are approved.
+ */
+function NewCenter({ user, onCancel, onCreated }: { user: User; onCancel: () => void; onCreated: (id: string) => void }) {
+  const { db } = useFirebase()
+  const email = emailOf(user)
+  const [access, setAccess] = useState<CreateAccess>({ kind: 'loading' })
+  const [editing, setEditing] = useState(false)
+  useEffect(() => watchAccess(db, email, setAccess), [db, email])
+  if (access.kind === 'loading') return <div className="card pad"><p className="muted">Checking whether you can create a center…</p></div>
+  if (access.kind === 'allowed') return <CreateCenter user={user} onCancel={onCancel} onCreated={onCreated} />
+  const r = access.request
+  if (!r || editing) return <RequestCenter user={user} previous={r} onCancel={onCancel} onSent={() => setEditing(false)} />
+  return (
+    <div className="card pad stack" data-testid="request-status">
+      {r.status === 'DECLINED' ? (
+        <>
+          <h2>Not approved</h2>
+          <p className="muted">Your request to create “{r.centerName}” was not approved. You can ask again with more details.</p>
+        </>
+      ) : (
+        <>
+          <h2>Request sent</h2>
+          <p className="muted">You asked on {new Date(r.createdAt).toLocaleString('en-GB')} to create “{r.centerName}”. As soon as the
+            SkillTrack owner approves it, this turns into the form to create your center. You can close the page and come back.</p>
+        </>
+      )}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn text" onClick={onCancel}>Back</button>
+        <button className="btn tonal" onClick={() => setEditing(true)}>{r.status === 'DECLINED' ? 'Ask again' : 'Change my request'}</button>
+      </div>
+    </div>
+  )
+}
+
+function RequestCenter({ user, previous, onCancel, onSent }: {
+  user: User; previous: CenterRequest | null; onCancel: () => void; onSent: () => void
+}) {
+  const { db } = useFirebase()
+  const toast = useToast()
+  const email = emailOf(user)
+  const [f, setF] = useState({
+    name: previous?.name ?? user.displayName ?? '', centerName: previous?.centerName ?? '', phone: previous?.phone ?? '',
+    message: previous?.message ?? '',
+  })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const send = async () => {
+    setBusy(true)
+    setError(null)
+    try {
+      await askToCreate(db, { email, name: f.name.trim(), centerName: f.centerName.trim(), phone: f.phone.trim(), message: f.message.trim() })
+      toast('Request sent')
+      onSent()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    }
+    setBusy(false)
+  }
+  return (
+    <div className="card pad stack">
+      <h2>Ask to create a center</h2>
+      <p className="muted">New centers on SkillTrack are approved by its owner. Tell them who you are; you'll be able to create your
+        center here as soon as they approve.</p>
+      <div className="form-grid">
+        <Field label="Your name *"><input className="input" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></Field>
+        <Field label="Phone *"><input className="input" type="tel" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} data-testid="request-phone" /></Field>
+        <Field label="Center name *" full><input className="input" autoFocus value={f.centerName} onChange={e => setF({ ...f, centerName: e.target.value })} data-testid="request-center-name" /></Field>
+        <Field label="Message (optional)" full><textarea className="input" rows={3} value={f.message} maxLength={1000}
+          placeholder="Where is your center, how many students, how you heard of SkillTrack…" onChange={e => setF({ ...f, message: e.target.value })} /></Field>
+      </div>
+      <div className="small muted">Signed in as {email}</div>
+      {error && <div className="error-text small">{error}</div>}
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn text" onClick={onCancel}>Cancel</button>
+        <button className="btn" disabled={busy || !f.name.trim() || !f.centerName.trim() || !f.phone.trim()} onClick={send} data-testid="send-request">
+          {busy ? 'Sending…' : 'Send request'}
+        </button>
       </div>
     </div>
   )
@@ -268,7 +377,7 @@ function CreateCenter({ user, onCancel, onCreated }: { user: User; onCancel: () 
   )
 }
 
-interface NavItem { to: string; label: string; icon: IconName; show: (p: Permissions) => boolean; group?: string }
+interface NavItem { to: string; label: string; icon: IconName; show: (p: Permissions, appOwner: boolean) => boolean; group?: string }
 
 const NAV: NavItem[] = [
   { to: '/', label: 'Home', icon: 'home', show: () => true },
@@ -284,6 +393,7 @@ const NAV: NavItem[] = [
   { to: '/reports', label: 'Reports', icon: 'reports', show: p => p.seeMoney },
   { to: '/staff', label: 'Staff', icon: 'staff', show: p => p.manageCenter },
   { to: '/settings', label: 'Settings', icon: 'settings', show: () => true },
+  { to: '/approvals', label: 'Center requests', icon: 'check', show: (_p, appOwner) => appOwner, group: 'SkillTrack' },
 ]
 
 function Shell() {
@@ -291,7 +401,8 @@ function Shell() {
   const { user, switchCenter } = useSession()
   const location = useLocation()
   const can = permissions(data.role)
-  const nav = NAV.filter(n => n.show(can))
+  const appOwner = isAppOwner(user.email)
+  const nav = NAV.filter(n => n.show(can, appOwner))
   const bottom: NavItem[] = [
     NAV[0], NAV[1], NAV[2],
     can.seeMoney ? NAV.find(n => n.to === '/fees')! : NAV.find(n => n.to === '/attendance')!,
@@ -357,6 +468,7 @@ function Shell() {
               {can.manageStudents && <Route path="/enquiries" element={<EnquiriesPage />} />}
               {can.manageStudents && <Route path="/certificates" element={<CertificatesPage />} />}
               {can.manageCenter && <Route path="/staff" element={<StaffPage />} />}
+              {appOwner && <Route path="/approvals" element={<ApprovalsPage me={(user.email ?? '').toLowerCase()} />} />}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>

@@ -12,7 +12,7 @@ plugins {
 // it still installs, but it cannot update an APK signed with the real key.
 // The app's version. Raising it is all a release takes: once the change is on
 // main and CI's tests pass, CI publishes vX.Y.Z by itself and phones update.
-val appVersionName = "1.0.1"
+val appVersionName = "1.1.0"
 
 // Android's version code follows from the name: 1.2.3 -> 10203 (minor and
 // patch stay below 100). Version 1.0.0 shipped with code 1, before this rule.

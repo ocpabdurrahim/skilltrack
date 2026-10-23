@@ -1,15 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import { useData } from '../../data/store'
+import { isAppOwner } from '../../data/approvals'
 import { permissions } from '../../domain/roles'
-import { NAV } from '../App'
+import { NAV, useSession } from '../App'
 import { PageHead } from '../common'
 import { Icon } from '../icons'
 
 /** Everything that doesn't fit the phone's bottom bar. */
 export default function MorePage() {
   const data = useData()
+  const { user } = useSession()
   const can = permissions(data.role)
-  const items = NAV.filter(n => n.show(can) && !['/', '/students', '/batches'].includes(n.to))
+  const owner = isAppOwner(user.email)
+  const items = NAV.filter(n => n.show(can, owner) && !['/', '/students', '/batches'].includes(n.to))
   return (
     <div className="page">
       <PageHead title="More" sub={data.center?.name} />

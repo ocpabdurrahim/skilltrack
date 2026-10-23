@@ -278,7 +278,7 @@ fun StudentAvatar(studentId: String, name: String, modifier: Modifier = Modifier
 }
 
 @Composable
-fun KeyValue(label: String, value: String, modifier: Modifier = Modifier, valueColor: Color = Color.Unspecified) {
+fun KeyValue(label: String, value: String, valueColor: Color = Color.Unspecified, modifier: Modifier = Modifier) {
     Row(modifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.42f))
         Text(value.ifBlank { "—" }, style = MaterialTheme.typography.bodyMedium, color = valueColor, modifier = Modifier.weight(0.58f))

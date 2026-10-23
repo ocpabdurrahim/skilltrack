@@ -291,7 +291,7 @@ class CenterStore {
             courses = list(Cols.courses, compareBy<Course>({ it.archived }).thenBy(byName) { it.name }),
             instructors = list(Cols.instructors, compareBy<Instructor>({ it.archived }).thenBy(byName) { it.name }),
             batches = list(Cols.batches, compareByDescending<Batch> { it.startDate }.thenBy(byName) { it.name }),
-            students = list(Cols.students, compareBy<Student>(byName) { it.name }.thenBy { it.regNo }),
+            students = list(Cols.students, compareBy<Student, String>(byName) { it.name }.thenBy { it.regNo }),
             enrollments = list(Cols.enrollments, compareByDescending<Enrollment> { it.date }.thenBy { it.rollNo }),
             payments = list(Cols.payments, compareByDescending<Payment> { it.date }.thenByDescending { it.createdAt }),
             attendance = list(Cols.attendance, compareByDescending<Attendance> { it.date }),

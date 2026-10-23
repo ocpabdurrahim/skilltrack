@@ -119,7 +119,9 @@ fun AdmissionScreen(studentId: String?, batchId: String?, enquiryId: String?) {
         data.batches.filter { val s = data.batchStatus(it); s == BatchStatus.RUNNING || s == BatchStatus.UPCOMING }
             .sortedWith(compareBy({ enquiry?.courseId != null && it.courseId != enquiry.courseId }, { it.name }))
     }
-    var chosenBatchId by rememberSaveable { mutableStateOf(batchId ?: openBatches.firstOrNull { it.courseId == enquiry?.courseId }?.id) }
+    var chosenBatchId by rememberSaveable {
+        mutableStateOf(batchId ?: openBatches.firstOrNull { it.courseId == enquiry?.courseId }?.id ?: openBatches.singleOrNull()?.id)
+    }
     val batch = chosenBatchId?.let { data.batchById[it] }
     val course = batch?.let { data.courseById[it.courseId] }
 

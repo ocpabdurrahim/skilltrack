@@ -1,12 +1,12 @@
 *.iml
 .gradle/
 .kotlin/
-/local.properties
+/android/local.properties
 /.idea/
 .DS_Store
-/build/
-/app/build/
-/captures/
+/android/build/
+/android/app/build/
+/android/captures/
 .externalNativeBuild/
 .cxx/
 
@@ -28,7 +28,7 @@ keystore.properties
 firebase-export-*/
 
 # Firebase app config (CI writes it from a secret; see .github/scripts/google-services.sh)
-/app/google-services.json
+/android/app/google-services.json
 
 # Local tool settings
 /.claude/

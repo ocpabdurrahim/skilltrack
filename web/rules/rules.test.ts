@@ -40,7 +40,7 @@ const member = (email: string, role: string, active = true) => ({
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: PROJECT,
-    firestore: { rules: readFileSync(resolve(__dirname, '../../firestore.rules'), 'utf8') },
+    firestore: { rules: readFileSync(resolve(__dirname, '../../firebase/firestore.rules'), 'utf8') },
   })
 })
 

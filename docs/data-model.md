@@ -1,7 +1,7 @@
 # SkillTrack data model and sync rules
 
 The Android app and the web app share one Cloud Firestore database and follow
-the same rules. Change both apps (and `firestore.rules`) together.
+the same rules. Change both apps (and `firebase/firestore.rules`) together.
 
 ## Centers, staff and roles
 
@@ -19,7 +19,7 @@ after signing in.
 
 Only `OWNER` and `ADMIN` change the center profile, staff, courses, batches and
 instructors. Inactive (`active: false`) or deleted staff records give no access.
-`firestore.rules` enforces all of this; the apps also hide what a role cannot do.
+`firebase/firestore.rules` enforces all of this; the apps also hide what a role cannot do.
 
 ## Where the data lives
 

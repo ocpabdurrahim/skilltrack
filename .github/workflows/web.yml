@@ -5,9 +5,9 @@ name: Web
 on:
   push:
     branches: [main]
-    paths: ['web/**', 'firebase.json', 'firestore.rules', 'firestore.indexes.json', '.github/workflows/web.yml']
+    paths: ['web/**', 'firebase/**', 'firebase.json', '.github/workflows/web.yml']
   pull_request:
-    paths: ['web/**', 'firebase.json', 'firestore.rules', 'firestore.indexes.json', '.github/workflows/web.yml']
+    paths: ['web/**', 'firebase/**', 'firebase.json', '.github/workflows/web.yml']
   workflow_dispatch:
 
 permissions:

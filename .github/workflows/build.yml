@@ -2,14 +2,14 @@ name: Build
 
 # Every push: unit tests, debug + release APKs, then the app is run on an
 # Android 14 emulator (UI tests, screenshots, release-build smoke test).
-# When everything passes on main and appVersionName in app/build.gradle.kts is
+# When everything passes on main and appVersionName in android/app/build.gradle.kts is
 # newer than the latest release, the release is published by itself (tag
 # vX.Y.Z plus the signed APK), and installed phones update to it.
 on:
   push:
     branches: [main]
     # Web-only changes are built by web.yml.
-    paths-ignore: ['web/**', 'docs/**', 'firebase.json', 'firestore.rules', 'firestore.indexes.json', '.github/workflows/web.yml']
+    paths-ignore: ['web/**', 'docs/**', 'firebase/**', 'firebase.json', '.github/workflows/web.yml']
   pull_request:
   workflow_dispatch:
 
@@ -53,6 +53,7 @@ jobs:
 
       # Debug builds talk to the Firebase emulators the test job runs (10.0.2.2 = the host).
       - name: Unit tests and APKs
+        working-directory: android
         run: |
           chmod +x gradlew
           TEST_PROPS="-PfirebaseEmulatorHost=10.0.2.2 -PupdateApiUrl=http://10.0.2.2:8000/latest.json"
@@ -66,9 +67,9 @@ jobs:
 
       - name: Name the release APK
         run: |
-          version=$(sed -n 's/^val appVersionName = "\(.*\)"/\1/p' app/build.gradle.kts)
+          version=$(sed -n 's/^val appVersionName = "\(.*\)"/\1/p' android/app/build.gradle.kts)
           mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk "dist/SkillTrack-$version.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "dist/SkillTrack-$version.apk"
           ls -l dist
           apksigner="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
           "$apksigner" verify --print-certs dist/*.apk | head -n 3
@@ -84,17 +85,17 @@ jobs:
           name: test-apks
           retention-days: 7
           path: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/apk/update/SkillTrack-99.0.0.apk
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/apk/update/SkillTrack-99.0.0.apk
 
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-reports
-          path: app/build/reports/
+          path: android/app/build/reports/
 
 
   emulator:
@@ -176,7 +177,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version=$(sed -n 's/^val appVersionName = "\(.*\)"/\1/p' app/build.gradle.kts)
+          version=$(sed -n 's/^val appVersionName = "\(.*\)"/\1/p' android/app/build.gradle.kts)
           latest=$(gh release view --json tagName --jq .tagName 2>/dev/null | sed 's/^v//' || true)
           echo "This build: $version. Latest release: ${latest:-none}."
           newest=$(printf '%s\n%s\n' "${latest:-0}" "$version" | sort -V | tail -1)

@@ -58,21 +58,30 @@ On the web:
 |---|---|
 | Android | Kotlin, Jetpack Compose, Material 3; Cloud Firestore with an unlimited offline cache; Google sign-in through Credential Manager |
 | Web | React, TypeScript, Vite; Firestore with a persistent browser cache; Firebase Hosting |
-| Server | Cloud Firestore and Firebase Auth. `firestore.rules` gives each center's staff access by role |
+| Server | Cloud Firestore and Firebase Auth. [`firebase/firestore.rules`](firebase/firestore.rules) gives each center's staff access by role |
 | Printing | HTML print layouts: Android's print service on the phone (which can also save as PDF), the browser's print on the web |
 
 Both apps follow one written contract, [docs/data-model.md](docs/data-model.md). It covers where every record lives and the rules both apps compute the same way: dues and overdue amounts, attendance rates, grades and positions, instructor pay and profit.
 
+## Folders
+
 ```
-app/src/main/java/io/github/ocpabdurrahim/skilltrack/
-├── data/      record types, the Firestore-backed center store, sign-in and centers
-├── domain/    money, dates, fees, attendance, results, instructor pay, amounts in words
-├── print/     receipts, certificates, ID cards, result sheets, dues lists (HTML)
-├── system/    photos, sharing (WhatsApp/SMS/CSV), Google sign-in, biometrics
-├── update/    self-update from GitHub releases
-└── ui/        Compose screens
-web/src/       the web app (same data model and rules)
-web/rules/     tests for firestore.rules, run against the Firestore emulator
+SkillTrack/
+├── android/                 the phone app (a Gradle project: open this folder in Android Studio)
+│   └── app/src/main/java/io/github/ocpabdurrahim/skilltrack/
+│       ├── data/            record types, the Firestore-backed center store, sign-in and centers
+│       ├── domain/          money, dates, fees, attendance, results, instructor pay, amounts in words
+│       ├── print/           receipts, certificates, ID cards, result sheets, dues lists (HTML)
+│       ├── system/          photos, sharing (WhatsApp/SMS/CSV), Google sign-in, biometrics
+│       ├── update/          self-update from GitHub releases
+│       └── ui/              Compose screens
+├── web/                     the web app (React + Vite)
+│   ├── src/                 pages, the Firestore store, the same rules as the phone
+│   └── rules/               tests for the security rules, run against the Firestore emulator
+├── firebase/                Cloud Firestore security rules and indexes
+├── docs/                    the data model both apps follow, release notes, screenshots
+├── firebase.json            Firebase project setup: hosting (web/dist), rules, local emulators
+└── .github/                 CI: build.yml (phone app and releases), web.yml (web app and rules)
 ```
 
 ## Building
@@ -87,9 +96,19 @@ GitHub Actions builds every push:
 
 Installed phones update themselves from the latest release. They check `releases/latest` at start-up (at most every 6 hours) and once a day, verify the APK's SHA-256, package name, `versionCode` and signing certificate, and install it once the app is in the background.
 
-**To ship a new version:** raise `appVersionName` in `app/build.gradle.kts` (for example `1.0.1` → `1.0.2`), put what changed in `docs/release-notes.md`, and push to `main`. Nothing else is needed: the version code follows from the name (1.2.3 → 10203), CI tests the build and publishes the release, and phones pick it up. A version that is not newer than the latest release is never published.
+**To ship a new version:** raise `appVersionName` in [`android/app/build.gradle.kts`](android/app/build.gradle.kts) (for example `1.0.1` → `1.0.2`), put what changed in `docs/release-notes.md`, and push to `main`. Nothing else is needed: the version code follows from the name (1.2.3 → 10203), CI tests the build and publishes the release, and phones pick it up. A version that is not newer than the latest release is never published.
 
-Locally:
+Locally, the phone app (needs the Android SDK):
+
+```bash
+cd android
+```
+
+```bash
+./gradlew assembleDebug
+```
+
+The web app, from the repository root:
 
 ```bash
 npm --prefix web install
@@ -103,7 +122,7 @@ npm --prefix web run build
 npx firebase-tools deploy --only hosting,firestore
 ```
 
-The Android build needs `app/google-services.json`, which is not in the repository. CI writes it from the `FIREBASE_GOOGLE_SERVICES` secret. Without that secret it uses `app/google-services.demo.json`, which works only with the Firebase emulators. To work on the web app against the emulators, run:
+The Android build needs `android/app/google-services.json`, which is not in the repository. CI writes it from the `FIREBASE_GOOGLE_SERVICES` secret. Without that secret it uses `android/app/google-services.demo.json`, which works only with the Firebase emulators. To work on the web app against the emulators, run:
 
 ```bash
 npx firebase-tools emulators:start --only auth,firestore --project demo-skilltrack

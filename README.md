@@ -82,10 +82,12 @@ GitHub Actions builds every push:
 - [`build.yml`](.github/workflows/build.yml), the Android app:
   1. unit tests, plus the debug and release APKs;
   2. a run on an Android 14 emulator against local Firebase emulators: UI and role tests, a screenshot tour, the self-update test and a smoke test of the minified release APK;
-  3. on a `v*` tag, a GitHub release carrying the signed APK.
+  3. on `main`, when `appVersionName` is newer than the latest release and everything above passed: the release publishes itself (tag `vX.Y.Z` plus the signed APK).
 - [`web.yml`](.github/workflows/web.yml), the web app: type-check, unit tests, security-rules tests against the Firestore emulator, and a production build.
 
-Installed phones update themselves from the latest release. They check `releases/latest`, verify the APK's SHA-256, package name, `versionCode` and signing certificate, and then install it. Raise `appVersionCode` and `appVersionName` in `app/build.gradle.kts` for every release.
+Installed phones update themselves from the latest release. They check `releases/latest` at start-up (at most every 6 hours) and once a day, verify the APK's SHA-256, package name, `versionCode` and signing certificate, and install it once the app is in the background.
+
+**To ship a new version:** raise `appVersionName` in `app/build.gradle.kts` (for example `1.0.1` → `1.0.2`), put what changed in `docs/release-notes.md`, and push to `main`. Nothing else is needed: the version code follows from the name (1.2.3 → 10203), CI tests the build and publishes the release, and phones pick it up. A version that is not newer than the latest release is never published.
 
 Locally:
 

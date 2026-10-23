@@ -2,12 +2,13 @@ name: Build
 
 # Every push: unit tests, debug + release APKs, then the app is run on an
 # Android 14 emulator (UI tests, screenshots, release-build smoke test).
-# Pushing a tag like v1.0.0 also publishes a GitHub release with the APK.
+# When everything passes on main and appVersionName in app/build.gradle.kts is
+# newer than the latest release, the release is published by itself (tag
+# vX.Y.Z plus the signed APK), and installed phones update to it.
 on:
   push:
     branches: [main]
-    tags: ['v*']
-    # Web-only changes are built by web.yml. (Tag pushes ignore path filters.)
+    # Web-only changes are built by web.yml.
     paths-ignore: ['web/**', 'docs/**', 'firebase.json', 'firestore.rules', 'firestore.indexes.json', '.github/workflows/web.yml']
   pull_request:
   workflow_dispatch:
@@ -58,7 +59,7 @@ jobs:
           ./gradlew --stacktrace $TEST_PROPS testDebugUnitTest assembleDebug assembleDebugAndroidTest assembleRelease
           # A "newer" copy of the debug app for the self-update test.
           cp app/build/outputs/apk/debug/app-debug.apk "$RUNNER_TEMP/app-debug.apk"
-          ./gradlew $TEST_PROPS -PversionCodeOverride=9999 -PversionNameOverride=99.0.0 assembleDebug
+          ./gradlew $TEST_PROPS -PversionCodeOverride=990000 -PversionNameOverride=99.0.0 assembleDebug
           mkdir -p app/build/outputs/apk/update
           cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/update/SkillTrack-99.0.0.apk
           cp "$RUNNER_TEMP/app-debug.apk" app/build/outputs/apk/debug/app-debug.apk
@@ -160,8 +161,9 @@ jobs:
             firebase-emulators.log
 
   release:
-    name: Publish GitHub release
-    if: startsWith(github.ref, 'refs/tags/v')
+    name: Publish the release
+    # Only from main, and only once the build and the emulator tests have passed.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [build, emulator]
     runs-on: ubuntu-latest
     permissions:
@@ -169,15 +171,40 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Is this a new version?
+        id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^val appVersionName = "\(.*\)"/\1/p' app/build.gradle.kts)
+          latest=$(gh release view --json tagName --jq .tagName 2>/dev/null | sed 's/^v//' || true)
+          echo "This build: $version. Latest release: ${latest:-none}."
+          newest=$(printf '%s\n%s\n' "${latest:-0}" "$version" | sort -V | tail -1)
+          if gh release view "v$version" > /dev/null 2>&1; then
+            echo "v$version is already published; nothing to do."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          elif [ "$newest" != "$version" ]; then
+            echo "::warning::appVersionName $version is older than the latest release $latest; nothing published."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - uses: actions/download-artifact@v4
+        if: steps.version.outputs.publish == 'true'
         with:
           name: SkillTrack-apk
           path: dist
 
       - name: Create the release
+        if: steps.version.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/*.apk \
-            --title "SkillTrack $GITHUB_REF_NAME" \
+          gh release create "v$VERSION" dist/*.apk \
+            --target "$GITHUB_SHA" \
+            --title "SkillTrack v$VERSION" \
             --notes-file docs/release-notes.md
+          echo "Published v$VERSION; installed phones pick it up on their next check."

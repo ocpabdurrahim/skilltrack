@@ -10,9 +10,14 @@ plugins {
 // Release signing comes from environment variables, which CI fills from the
 // repository secrets. Without them a release build falls back to the debug key:
 // it still installs, but it cannot update an APK signed with the real key.
-// The app's version: bump both for every release, then tag vX.Y.Z to publish it.
-val appVersionCode = 1
-val appVersionName = "1.0.0"
+// The app's version. Raising it is all a release takes: once the change is on
+// main and CI's tests pass, CI publishes vX.Y.Z by itself and phones update.
+val appVersionName = "1.0.1"
+
+// Android's version code follows from the name: 1.2.3 -> 10203 (minor and
+// patch stay below 100). Version 1.0.0 shipped with code 1, before this rule.
+val appVersionCode = appVersionName.split('.').map { it.toInt() }
+    .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
 
 // Where the app looks for updates (its GitHub releases).
 val updateApiUrl = "https://api.github.com/repos/ocpabdurrahim/skilltrack/releases/latest"

@@ -1,9 +1,5 @@
-The first release of SkillTrack, a training center manager for Android and the web.
+SkillTrack 1.0.1
 
-- Students, admissions with payment plans, fee collection with money receipts, dues with WhatsApp/SMS reminders
-- Courses, batches, attendance (P/A/L/E), exams with Bangladesh grades and positions, result sheets and mark sheets
-- Certificates and student ID cards, enquiries with follow-ups, expenses, instructor pay and monthly profit reports
-- Owner, Admin, Office and Teacher roles; your staff sign in with their own Google accounts
-- Works offline and syncs with the web app at https://skilltrack-058fd.web.app
+- New versions of SkillTrack are now published automatically as soon as they pass their tests, so your phone gets fixes sooner. Nothing changes in how you use the app.
 
-Install the APK below (Android 8.0 or newer). After that the app keeps itself up to date.
+Install the APK below on Android 8.0 or newer if you don't have SkillTrack yet. If you already have it, it updates itself. For updates to install without a tap, allow it once under More → This phone → "Allow SkillTrack to install updates".

@@ -1,0 +1,116 @@
+rules_version = '2';
+
+// SkillTrack: every center's records are visible only to its staff, and each
+// role may change only its own part (docs/data-model.md, "Centers, staff and roles").
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function myEmail() {
+      return request.auth.token.email.lower();
+    }
+
+    function memberPath(c) {
+      return /databases/$(database)/documents/centers/$(c)/members/$(myEmail());
+    }
+
+    // The caller's staff record in center c, as it was before this request.
+    function hasRole(c, roles) {
+      let m = get(memberPath(c)).data;
+      return signedIn() && m.active == true && m.get('deleted', false) == false && m.role in roles;
+    }
+
+    function isMember(c) {
+      return hasRole(c, ['OWNER', 'ADMIN', 'OFFICE', 'TEACHER']);
+    }
+
+    function stamped() {
+      return request.resource.data.updatedAt == request.time;
+    }
+
+    // Collections a teacher may not read.
+    function isMoney(col) {
+      return col in ['payments', 'expenses', 'expenseHeads', 'instructorPayments'];
+    }
+
+    function canWrite(c, col) {
+      return (col in ['courses', 'batches', 'instructors'] && hasRole(c, ['OWNER', 'ADMIN']))
+        || (col in ['students', 'photos', 'enrollments', 'enquiries', 'certificates',
+                    'payments', 'expenses', 'expenseHeads', 'instructorPayments']
+            && hasRole(c, ['OWNER', 'ADMIN', 'OFFICE']))
+        || (col in ['attendance', 'exams'] && hasRole(c, ['OWNER', 'ADMIN', 'TEACHER']));
+    }
+
+    match /centers/{c} {
+      allow read: if isMember(c);
+
+      // A new center and its owner's staff record arrive together in one batch.
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail == myEmail()
+        && stamped()
+        && getAfter(memberPath(c)).data.role == 'OWNER';
+
+      allow update: if hasRole(c, ['OWNER', 'ADMIN'])
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.ownerEmail == resource.data.ownerEmail
+        && stamped();
+
+      allow delete: if false;
+
+      match /members/{m} {
+        // Staff see each other; anyone may read their own record.
+        allow read: if isMember(c) || (signedIn() && m == myEmail());
+
+        // The creator's owner record, written in the same batch as the new center.
+        allow create: if signedIn()
+          && m == myEmail()
+          && request.resource.data.email == m
+          && request.resource.data.role == 'OWNER'
+          && request.resource.data.active == true
+          && stamped()
+          && !exists(/databases/$(database)/documents/centers/$(c))
+          && getAfter(/databases/$(database)/documents/centers/$(c)).data.ownerUid == request.auth.uid;
+
+        // Owners and admins manage everyone else; nobody else becomes an owner.
+        allow create: if hasRole(c, ['OWNER', 'ADMIN'])
+          && request.resource.data.email == m
+          && request.resource.data.role in ['ADMIN', 'OFFICE', 'TEACHER']
+          && stamped();
+
+        allow update: if hasRole(c, ['OWNER', 'ADMIN'])
+          && resource.data.role != 'OWNER'
+          && request.resource.data.email == m
+          && request.resource.data.role in ['ADMIN', 'OFFICE', 'TEACHER']
+          && stamped();
+
+        // The owner may edit their own record (e.g. the name) but stays the active owner.
+        allow update: if signedIn()
+          && m == myEmail()
+          && resource.data.role == 'OWNER'
+          && request.resource.data.role == 'OWNER'
+          && request.resource.data.active == true
+          && request.resource.data.get('deleted', false) == false
+          && request.resource.data.email == m
+          && stamped();
+
+        allow delete: if false;
+      }
+
+      match /{col}/{id} {
+        allow read: if col != 'members' && isMember(c) && (!isMoney(col) || hasRole(c, ['OWNER', 'ADMIN', 'OFFICE']));
+        allow create, update: if canWrite(c, col) && stamped();
+        allow delete: if false;
+      }
+    }
+
+    // Lets a signed-in person find the centers they belong to
+    // (collection-group query on members where email == their email).
+    match /{path=**}/members/{m} {
+      allow read: if signedIn() && resource.data.email == myEmail();
+    }
+  }
+}

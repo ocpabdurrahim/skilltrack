@@ -1,0 +1,34 @@
+*.iml
+.gradle/
+.kotlin/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/app/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material never goes into the repository.
+*.jks
+*.keystore
+keystore.properties
+
+# Downloaded APKs
+/dist/
+
+# Web app
+/web/node_modules/
+/web/dist/
+
+# Firebase CLI
+/.firebase/
+*-debug.log
+firebase-export-*/
+
+# Firebase app config (CI writes it from a secret; see .github/scripts/google-services.sh)
+/app/google-services.json
+
+# Local tool settings
+/.claude/

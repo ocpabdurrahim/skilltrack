@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A graduation cap with a gold tassel, kept inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M37,52.5L37,63C37,70 71,70 71,63L71,52.5L54,60.5Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,31L84,44.5L54,58L24,44.5Z" />
+    <path
+        android:strokeColor="#FFFFC857"
+        android:strokeWidth="2.6"
+        android:strokeLineCap="round"
+        android:pathData="M79,46.8L79,63" />
+    <path
+        android:fillColor="#FFFFC857"
+        android:pathData="M75.5,66a3.5,3.5 0,1 0,7 0a3.5,3.5 0,1 0,-7 0z" />
+</vector>

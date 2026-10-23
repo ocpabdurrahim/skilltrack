@@ -120,6 +120,7 @@ class CenterFlowTest {
         tapInList("nav_batches")
         tapInList("batch_row")
         tapInList("batch_attendance")
+        compose.waitForTag("mark_row")
         tapInList("save_attendance")
         compose.waitForTag("batch_tab_1")
         compose.onNodeWithTag("batch_tab_1").performClick()

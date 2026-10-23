@@ -113,7 +113,7 @@ fun AttendanceScreen(batchId: String, initialDate: String?) {
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(top = padding.calculateTopPadding()),
+                .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
         ) {
             Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 DateInput(date, { date = it }, "Class day", tag = "attendance_date")
@@ -244,7 +244,7 @@ fun ExamScreen(batchId: String, examId: String?) {
             Modifier
                 .fillMaxSize()
                 .imePadding()
-                .padding(top = padding.calculateTopPadding()),
+                .padding(top = padding.calculateTopPadding(), bottom = padding.calculateBottomPadding()),
         ) {
             LazyColumn(
                 Modifier.weight(1f),

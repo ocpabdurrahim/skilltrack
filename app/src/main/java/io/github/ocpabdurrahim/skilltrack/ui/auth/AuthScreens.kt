@@ -229,7 +229,7 @@ fun CenterPickerScreen(state: Session.Choosing) {
     ) { padding ->
         val centers = state.centers
         LazyColumn(
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 8.dp, bottom = 32.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 8.dp, bottom = padding.calculateBottomPadding() + 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
@@ -298,7 +298,7 @@ private fun CreateCenterScreen(email: String, onBack: () -> Unit) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
-                .padding(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 8.dp, bottom = 32.dp),
+                .padding(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 8.dp, bottom = padding.calculateBottomPadding() + 32.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Text(

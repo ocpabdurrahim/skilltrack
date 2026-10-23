@@ -177,7 +177,7 @@ object DemoData {
             val month = YearMonth.from(today).minusMonths(m.toLong())
             fun on(day: Int) = month.atDay(day.coerceAtMost(month.lengthOfMonth())).let { if (it.isAfter(today)) today else it }.toString()
             writes += Cols.expenses to Expense(headId = "head_rent", amount = 2_500_000, date = on(5), method = PayMethod.BANK, paidTo = "Landlord")
-            writes += Cols.expenses to Expense(headId = "head_bills", amount = 420_000 + random.nextLong(150_000), date = on(10), paidTo = "DESCO")
+            writes += Cols.expenses to Expense(headId = "head_bills", amount = (4_200 + random.nextLong(1_500)) * 100, date = on(10), paidTo = "DESCO")
             writes += Cols.expenses to Expense(headId = "head_internet", amount = 150_000, date = on(8), method = PayMethod.BKASH, paidTo = "Link3")
             if (m % 2 == 0) writes += Cols.expenses to Expense(headId = "head_marketing", amount = 300_000, date = on(15), note = "Facebook boost")
             if (m > 0) writes += Cols.instructorPayments to InstructorPayment(instructorId = rahim.id, amount = 1_500_000, date = on(2), month = month.minusMonths(1).toString(), method = PayMethod.BANK)

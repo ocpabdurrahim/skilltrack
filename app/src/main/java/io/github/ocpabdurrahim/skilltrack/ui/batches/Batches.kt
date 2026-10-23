@@ -28,7 +28,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -242,7 +242,7 @@ fun BatchDetailScreen(id: String) {
             }
         }
         item {
-            PrimaryTabRow(selectedTabIndex = tab) {
+            ScrollableTabRow(selectedTabIndex = tab, edgePadding = 0.dp) {
                 listOf("Students", "Attendance", "Exams", "Results").forEachIndexed { i, label ->
                     Tab(selected = tab == i, onClick = { tab = i }, text = { Text(label) }, modifier = Modifier.testTag("batch_tab_$i"))
                 }
@@ -407,7 +407,7 @@ fun BatchEditScreen(id: String?) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
-                .padding(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 4.dp, bottom = 40.dp),
+                .padding(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 4.dp, bottom = padding.calculateBottomPadding() + 40.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Dropdown(

@@ -321,7 +321,7 @@ fun CollectFeeScreen(enrollmentId: String?, studentId: String?) {
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .imePadding()
-                .padding(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 4.dp, bottom = 40.dp),
+                .padding(start = 16.dp, end = 16.dp, top = padding.calculateTopPadding() + 4.dp, bottom = padding.calculateBottomPadding() + 40.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             SkillCard(onClick = { picking = true }, modifier = Modifier.testTag("collect_student")) {

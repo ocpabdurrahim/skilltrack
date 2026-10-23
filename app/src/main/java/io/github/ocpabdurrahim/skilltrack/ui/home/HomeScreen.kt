@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudSync
@@ -179,7 +179,7 @@ fun HomeScreen() {
             item {
                 TileRow {
                     StatTile("Overdue fees", money.format(data.totalOverdue), colors.danger, Modifier.weight(1f), onClick = { nav.go(Routes.DUES) }, tag = "tile_overdue")
-                    StatTile("Expenses this month", money.format(data.expenseTotal(month) + data.instructorPayTotal(month)), colors.warning, Modifier.weight(1f), onClick = { nav.go(Routes.EXPENSES) })
+                    StatTile("Spending this month", money.format(data.expenseTotal(month) + data.instructorPayTotal(month)), colors.warning, Modifier.weight(1f), onClick = { nav.go(Routes.EXPENSES) })
                 }
             }
             item {
@@ -277,7 +277,7 @@ private fun QuickActions(role: Role) {
         if (role.academic) add(Action("Attendance", Icons.Filled.EventAvailable, "qa_attendance") { nav.tab(Routes.BATCHES) })
         if (role.office) add(Action("Enquiry", Icons.Filled.SupportAgent, "qa_enquiry") { nav.go(Routes.enquiryEdit()) })
         if (role.office) add(Action("Expense", Icons.AutoMirrored.Filled.ReceiptLong, "qa_expense") { nav.go(Routes.EXPENSES) })
-        if (role.manages) add(Action("Reports", Icons.Filled.CheckCircle, "qa_reports") { nav.go(Routes.REPORTS) })
+        if (role.manages) add(Action("Reports", Icons.Filled.BarChart, "qa_reports") { nav.go(Routes.REPORTS) })
     }
     FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         actions.forEach { a ->

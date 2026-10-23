@@ -1,5 +1,6 @@
 package io.github.ocpabdurrahim.skilltrack.ui
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -24,6 +25,9 @@ val LocalMoney = staticCompositionLocalOf { MoneyFormat() }
 
 /** Shows a short message at the bottom of the screen. */
 val LocalNotify = staticCompositionLocalOf<(String) -> Unit> { {} }
+
+/** Where [LocalNotify]'s messages appear; each screen's scaffold shows it above its buttons. */
+val LocalSnackbar = staticCompositionLocalOf { SnackbarHostState() }
 
 /** The open center, live. */
 @Composable

@@ -8,6 +8,8 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.firebase.Firebase
 import com.google.firebase.app
@@ -20,6 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.json.JSONArray
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import org.json.JSONObject
 import java.io.File
 import java.io.FileOutputStream
@@ -93,6 +97,21 @@ object Screenshots {
         val bitmap = instrumentation.uiAutomation.takeScreenshot() ?: return
         val dir = File(instrumentation.targetContext.filesDir, "screens").apply { mkdirs() }
         FileOutputStream(File(dir, "$name.png")).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    }
+}
+
+/**
+ * On a failed test: a screenshot and the screen's semantics tree, saved next to
+ * the tour's screenshots. Must sit inside the compose rule (a higher `order`).
+ */
+class FailureCapture(private val compose: ComposeTestRule) : TestWatcher() {
+    override fun failed(e: Throwable, description: Description) {
+        val name = "FAILED_${description.testClass.simpleName}_${description.methodName}"
+        runCatching { Screenshots.take(name) }
+        runCatching {
+            val dir = File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir, "screens").apply { mkdirs() }
+            File(dir, "$name.txt").writeText(compose.onRoot(useUnmergedTree = true).printToString(maxDepth = 60))
+        }
     }
 }
 

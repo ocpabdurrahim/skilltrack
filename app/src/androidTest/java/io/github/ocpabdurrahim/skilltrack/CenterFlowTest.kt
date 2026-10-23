@@ -21,8 +21,11 @@ import org.junit.runner.RunWith
 /** A new owner sets up a center and runs a first day, all through the screens. */
 @RunWith(AndroidJUnit4::class)
 class CenterFlowTest {
-    @get:Rule
+    @get:Rule(order = 0)
     val compose = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val capture = FailureCapture(compose)
 
     @Before
     fun setUp() {

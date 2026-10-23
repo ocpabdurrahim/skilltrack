@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -30,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -211,7 +209,7 @@ fun SkillRoot(container: AppContainer) {
     val money = MoneyFormat(data.center?.currencySymbol ?: "৳", data.center?.grouping ?: Grouping.SOUTH_ASIAN)
 
     SkillTheme(dark = dark, dynamicColor = s.dynamicColor) {
-        CompositionLocalProvider(LocalApp provides container, LocalMoney provides money, LocalNotify provides notify) {
+        CompositionLocalProvider(LocalApp provides container, LocalMoney provides money, LocalNotify provides notify, LocalSnackbar provides snackbar) {
             Surface(
                 modifier = Modifier
                     .fillMaxSize()
@@ -232,13 +230,6 @@ fun SkillRoot(container: AppContainer) {
                             else -> key(st.centerId, data.role) { MainNav(data.role) }
                         }
                     }
-                    SnackbarHost(
-                        snackbar,
-                        Modifier
-                            .align(Alignment.BottomCenter)
-                            .navigationBarsPadding()
-                            .padding(bottom = 84.dp),
-                    )
                     // Drawn over the app rather than instead of it, so the screen you
                     // were on is still there after unlocking.
                     val pinHash = s.pinHash

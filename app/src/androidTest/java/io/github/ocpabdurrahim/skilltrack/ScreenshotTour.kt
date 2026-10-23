@@ -21,8 +21,11 @@ import org.junit.runner.RunWith
 /** Walks the main screens of a demo center and saves a screenshot of each. */
 @RunWith(AndroidJUnit4::class)
 class ScreenshotTour {
-    @get:Rule
+    @get:Rule(order = 0)
     val compose = createAndroidComposeRule<MainActivity>()
+
+    @get:Rule(order = 1)
+    val capture = FailureCapture(compose)
 
     @Before
     fun setUp() {

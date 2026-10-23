@@ -47,7 +47,8 @@ class SessionManager(
     private val _state = MutableStateFlow<Session>(Session.Starting)
     val state: StateFlow<Session> = _state
 
-    private var currentUid: String? = null
+    /** The user the state was last worked out for; [UNSET] until the first auth event. */
+    private var currentUid: String? = UNSET
 
     fun start() {
         auth.addAuthStateListener { onUser(it.currentUser) }
@@ -79,7 +80,8 @@ class SessionManager(
         scope.launch {
             val last = settings.settings.first().lastCenter
             val centerId = last?.takeIf { it.startsWith("$uid:") }?.substringAfter(':')
-            if (auth.currentUser?.uid != uid) return@launch
+            // Someone may have opened or created a center in the meantime.
+            if (auth.currentUser?.uid != uid || _state.value !is Session.Choosing) return@launch
             // Straight back into the last center (works offline); the store finds out if access was removed.
             if (centerId != null) enter(centerId) else discover()
         }
@@ -93,7 +95,8 @@ class SessionManager(
         _state.value = Session.Choosing(email, user.displayName.orEmpty(), null)
         scope.launch {
             val result = runCatching { findCenters(email) }
-            if (auth.currentUser?.uid != user.uid) return@launch
+            // Signed out, or a center was opened or created while looking: leave that alone.
+            if (auth.currentUser?.uid != user.uid || _state.value !is Session.Choosing) return@launch
             result.onSuccess { centers ->
                 _state.value = Session.Choosing(email, user.displayName.orEmpty(), centers)
             }.onFailure { e ->
@@ -154,5 +157,6 @@ class SessionManager(
 
     private companion object {
         const val TAG = "SkillTrackSession"
+        const val UNSET = "(no user yet)"
     }
 }

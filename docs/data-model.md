@@ -5,8 +5,9 @@ the same rules. Change both apps (and `firebase/firestore.rules`) together.
 
 ## Centers, staff and roles
 
-Everything belongs to a **center**. Anyone can sign in with Google and create
-a center; they become its **Owner**. The owner (or an admin) adds staff by their
+Everything belongs to a **center**. Whoever creates a center becomes its
+**Owner**; only the app owner and people they approved may create one (see
+"Who may create a center"). The owner (or an admin) adds staff by their
 Google email address. A person can belong to several centers and picks one
 after signing in.
 
@@ -20,6 +21,29 @@ after signing in.
 Only `OWNER` and `ADMIN` change the center profile, staff, courses, batches and
 instructors. Inactive (`active: false`) or deleted staff records give no access.
 `firebase/firestore.rules` enforces all of this; the apps also hide what a role cannot do.
+
+## Who may create a center
+
+The **app owner** is `ocpabdurrahim@gmail.com`. The list is written in
+`firebase/firestore.rules` (`isAppAdmin`) and in both apps
+(`AppOwner.EMAILS` / `APP_OWNERS`); change all three together.
+
+- The app owner may always create centers.
+- Anyone else needs a document `creators/{their lower-case email}`, which only
+  the app owner can write or delete. Deleting it stops further centers; centers
+  already made are not affected.
+- People ask through `centerRequests/{their email}`. They write it themselves,
+  always with `status: 'PENDING'` (also to ask again after a decline). The app
+  owner answers by setting `APPROVED` (in the same batch as the `creators`
+  document) or `DECLINED`.
+
+| Collection | Fields |
+|---|---|
+| `creators/{email}` | `email`, `name`, `approvedBy` (email), `approvedAt` (ms), `updatedAt` |
+| `centerRequests/{email}` | `email`, `name`, `centerName`, `phone`, `message`, `status` (`PENDING` \| `APPROVED` \| `DECLINED`), `createdAt` (ms), `answeredBy` (email or `""`), `updatedAt` |
+
+These two are read one document at a time (or as a whole list by the app owner)
+and have no `deleted` field; the rules allow no other fields.
 
 ## Where the data lives
 

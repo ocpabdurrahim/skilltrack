@@ -31,6 +31,16 @@ service cloud.firestore {
       return request.resource.data.updatedAt == request.time;
     }
 
+    // The SkillTrack owner: approves who may create centers (docs/data-model.md,
+    // "Who may create a center"). The apps carry the same list.
+    function isAppAdmin() {
+      return signedIn() && myEmail() in ['ocpabdurrahim@gmail.com'];
+    }
+
+    function mayCreateCenters() {
+      return isAppAdmin() || exists(/databases/$(database)/documents/creators/$(myEmail()));
+    }
+
     // Collections a teacher may not read.
     function isMoney(col) {
       return col in ['payments', 'expenses', 'expenseHeads', 'instructorPayments'];
@@ -47,8 +57,10 @@ service cloud.firestore {
     match /centers/{c} {
       allow read: if isMember(c);
 
-      // A new center and its owner's staff record arrive together in one batch.
+      // A new center and its owner's staff record arrive together in one batch,
+      // from the app owner or someone they approved.
       allow create: if signedIn()
+        && mayCreateCenters()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerEmail == myEmail()
         && stamped()
@@ -111,6 +123,33 @@ service cloud.firestore {
     // (collection-group query on members where email == their email).
     match /{path=**}/members/{m} {
       allow read: if signedIn() && resource.data.email == myEmail();
+    }
+
+    // People the app owner has allowed to create centers; the id is their email.
+    match /creators/{e} {
+      allow read: if isAppAdmin() || (signedIn() && e == myEmail());
+      allow create, update: if isAppAdmin()
+        && request.resource.data.email == e
+        && request.resource.data.keys().hasOnly(['email', 'name', 'approvedBy', 'approvedAt', 'updatedAt'])
+        && stamped();
+      allow delete: if isAppAdmin();
+    }
+
+    // Requests for that permission, one per email.
+    match /centerRequests/{e} {
+      allow read: if isAppAdmin() || (signedIn() && e == myEmail());
+      // The person asks, or asks again after a decline: always as PENDING.
+      allow create, update: if signedIn()
+        && e == myEmail()
+        && request.resource.data.email == e
+        && request.resource.data.status == 'PENDING'
+        && request.resource.data.keys().hasOnly(['email', 'name', 'centerName', 'phone', 'message', 'status', 'createdAt', 'answeredBy', 'updatedAt'])
+        && stamped();
+      // The app owner answers.
+      allow update: if isAppAdmin()
+        && request.resource.data.status in ['APPROVED', 'DECLINED']
+        && stamped();
+      allow delete: if isAppAdmin();
     }
   }
 }

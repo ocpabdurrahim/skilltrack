@@ -90,6 +90,7 @@ import io.github.ocpabdurrahim.skilltrack.ui.manage.InstructorEditScreen
 import io.github.ocpabdurrahim.skilltrack.ui.manage.InstructorsScreen
 import io.github.ocpabdurrahim.skilltrack.ui.manage.ReportsScreen
 import io.github.ocpabdurrahim.skilltrack.ui.more.AppSettingsScreen
+import io.github.ocpabdurrahim.skilltrack.ui.more.ApprovalsScreen
 import io.github.ocpabdurrahim.skilltrack.ui.more.CenterSettingsScreen
 import io.github.ocpabdurrahim.skilltrack.ui.more.MoreScreen
 import io.github.ocpabdurrahim.skilltrack.ui.more.StaffScreen
@@ -118,6 +119,7 @@ object Routes {
     const val STAFF = "staff"
     const val CENTER = "center-settings"
     const val APP_SETTINGS = "app-settings"
+    const val APPROVALS = "approvals"
 
     // Ids are URL-safe (letters, digits, _ and -); dates are YYYY-MM-DD.
     fun student(id: String) = "student/$id"
@@ -296,6 +298,7 @@ private fun MainNav(role: Role) {
                 composable(Routes.STAFF) { StaffScreen() }
                 composable(Routes.CENTER) { CenterSettingsScreen() }
                 composable(Routes.APP_SETTINGS) { AppSettingsScreen() }
+                composable(Routes.APPROVALS) { ApprovalsScreen(onBack = { navigator.back() }) }
 
                 withId("student/{id}") { StudentDetailScreen(it.arg("id")!!) }
                 withOptional("student-edit?id={id}", "id") { StudentEditScreen(it.arg("id")) }

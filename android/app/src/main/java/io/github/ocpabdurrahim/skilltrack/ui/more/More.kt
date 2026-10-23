@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
@@ -56,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.firebase.Firebase
 import com.google.firebase.app
 import io.github.ocpabdurrahim.skilltrack.BuildConfig
+import io.github.ocpabdurrahim.skilltrack.data.AppOwner
 import io.github.ocpabdurrahim.skilltrack.data.ThemeMode
 import io.github.ocpabdurrahim.skilltrack.domain.Pin
 import io.github.ocpabdurrahim.skilltrack.system.Biometrics
@@ -135,6 +137,16 @@ fun MoreScreen() {
             item { HorizontalDivider(Modifier.padding(vertical = 8.dp)) }
             item { SectionHeader("You", Modifier.padding(horizontal = 16.dp)) }
             item { SettingRow(Icons.Filled.PhoneAndroid, "This phone", "Theme, app lock and updates", onClick = { nav.go(Routes.APP_SETTINGS) }, tag = "more_app") }
+            if (AppOwner.isAppOwner(data.me?.email)) {
+                item {
+                    SettingRow(
+                        Icons.Filled.HowToReg, "Center requests", "As the SkillTrack owner: who may create a center",
+                        onClick = { nav.go(Routes.APPROVALS) },
+                        trailing = { PendingBadge { } },
+                        tag = "more_approvals",
+                    )
+                }
+            }
             item {
                 SettingRow(Icons.Filled.Language, "Open the web app", webAppUrl().removePrefix("https://"), onClick = {
                     app.appLock.skipNextLock()

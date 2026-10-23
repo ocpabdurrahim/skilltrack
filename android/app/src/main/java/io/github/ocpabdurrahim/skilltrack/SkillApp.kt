@@ -11,6 +11,7 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.firestore
 import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.persistentCacheSettings
+import io.github.ocpabdurrahim.skilltrack.data.Approvals
 import io.github.ocpabdurrahim.skilltrack.data.CenterStore
 import io.github.ocpabdurrahim.skilltrack.data.SessionManager
 import io.github.ocpabdurrahim.skilltrack.data.Settings
@@ -68,6 +69,7 @@ class AppContainer(val app: SkillApp) {
     val store = CenterStore()
     val session = SessionManager(settings, store, appScope)
     val photos = Photos(store)
+    val approvals = Approvals()
     val updater = AppUpdater(app, settings, appScope)
     val appLock = AppLockState()
 }

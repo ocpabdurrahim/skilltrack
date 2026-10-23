@@ -65,8 +65,82 @@ async function seed() {
   })
 }
 
-describe('creating a center', () => {
+/** The app owner's approval for [email] to create centers, written with rules switched off. */
+async function approve(email: string) {
+  await env.withSecurityRulesDisabled(async ctx => {
+    await setDoc(doc(ctx.firestore(), 'creators', email), { email, name: '', approvedBy: APP_ADMIN, approvedAt: 1, updatedAt: Timestamp.now() })
+  })
+}
+
+const APP_ADMIN = 'ocpabdurrahim@gmail.com'
+
+const newCenter = (email: string, id = 'c2') => {
+  const db = user(email).firestore()
+  const batch = writeBatch(db)
+  batch.set(doc(db, 'centers', id), centerDoc(`uid-${email}`, email))
+  batch.set(doc(db, 'centers', id, 'members', email), member(email, 'OWNER'))
+  return batch.commit()
+}
+
+const request = (email: string, status = 'PENDING') => ({
+  email, name: 'Karim', centerName: 'Karim IT', phone: '01711000000', message: 'Please', status, createdAt: 1,
+  answeredBy: '', updatedAt: serverTimestamp(),
+})
+
+describe('who may create a center', () => {
   beforeEach(() => env.clearFirestore())
+
+  it('is the app owner, and people they approved', async () => {
+    await assertFails(newCenter('new@test.com'))
+    await assertSucceeds(newCenter(APP_ADMIN, 'c9'))
+    await approve('new@test.com')
+    await assertSucceeds(newCenter('new@test.com'))
+    // Taking the approval away stops further centers, not the one already made.
+    await env.withSecurityRulesDisabled(ctx => deleteDoc(doc(ctx.firestore(), 'creators', 'new@test.com')))
+    await assertFails(newCenter('new@test.com', 'c3'))
+    await assertSucceeds(getDoc(doc(user('new@test.com').firestore(), 'centers', 'c2')))
+  })
+
+  it('lets people ask, and only the app owner answer', async () => {
+    const asker = user('new@test.com').firestore()
+    await assertSucceeds(setDoc(doc(asker, 'centerRequests', 'new@test.com'), request('new@test.com')))
+    await assertSucceeds(getDoc(doc(asker, 'centerRequests', 'new@test.com')))
+    // Not for someone else, not approving themselves, no extra fields, no reading the list.
+    await assertFails(setDoc(doc(asker, 'centerRequests', 'other@test.com'), request('other@test.com')))
+    await assertFails(setDoc(doc(asker, 'centerRequests', 'new@test.com'), request('new@test.com', 'APPROVED')))
+    await assertFails(setDoc(doc(asker, 'centerRequests', 'new@test.com'), { ...request('new@test.com'), role: 'OWNER' }))
+    await assertFails(getDocs(collection(asker, 'centerRequests')))
+    await assertFails(setDoc(doc(asker, 'creators', 'new@test.com'), { email: 'new@test.com', name: '', approvedBy: 'x', approvedAt: 1, updatedAt: serverTimestamp() }))
+    await assertFails(getDoc(doc(user('other@test.com').firestore(), 'centerRequests', 'new@test.com')))
+
+    // The app owner sees the requests and approves in one batch.
+    const boss = user(APP_ADMIN).firestore()
+    await assertSucceeds(getDocs(collection(boss, 'centerRequests')))
+    const batch = writeBatch(boss)
+    batch.set(doc(boss, 'creators', 'new@test.com'), { email: 'new@test.com', name: 'Karim', approvedBy: APP_ADMIN, approvedAt: 1, updatedAt: serverTimestamp() })
+    batch.set(doc(boss, 'centerRequests', 'new@test.com'), { ...request('new@test.com', 'APPROVED'), answeredBy: APP_ADMIN })
+    await assertSucceeds(batch.commit())
+    await assertSucceeds(getDocs(collection(boss, 'creators')))
+    // The asker sees their approval, and can now create a center.
+    await assertSucceeds(getDoc(doc(asker, 'creators', 'new@test.com')))
+    await assertFails(getDocs(collection(asker, 'creators')))
+    await assertSucceeds(newCenter('new@test.com'))
+  })
+
+  it('lets a declined person ask again', async () => {
+    const asker = user('new@test.com').firestore()
+    await assertSucceeds(setDoc(doc(asker, 'centerRequests', 'new@test.com'), request('new@test.com')))
+    await assertSucceeds(setDoc(doc(user(APP_ADMIN).firestore(), 'centerRequests', 'new@test.com'), request('new@test.com', 'DECLINED')))
+    await assertFails(newCenter('new@test.com'))
+    await assertSucceeds(setDoc(doc(asker, 'centerRequests', 'new@test.com'), request('new@test.com')))
+  })
+})
+
+describe('creating a center', () => {
+  beforeEach(async () => {
+    await env.clearFirestore()
+    await approve('new@test.com')
+  })
 
   it('works as one batch of the center and the owner record', async () => {
     const db = user('new@test.com').firestore()

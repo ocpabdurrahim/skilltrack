@@ -61,8 +61,18 @@ suspend fun signInFresh(prefix: String): String {
     return email
 }
 
-/** Creates a center owned by whoever is signed in, and waits until it is open. */
+/**
+ * The app owner's permission for whoever is signed in to create centers,
+ * written straight into the emulator (as if approved on another device).
+ */
+fun approveSignedInUser() {
+    val email = Firebase.auth.currentUser!!.email!!.lowercase()
+    EmulatorRest().put("creators/$email", mapOf("email" to email, "name" to "", "approvedBy" to "test", "approvedAt" to 1L))
+}
+
+/** Creates a center owned by whoever is signed in (approving them first), and waits until it is open. */
 suspend fun createCenter(name: String = "Test Center"): String {
+    approveSignedInUser()
     container.session.createCenter(
         Center(id = "", name = name, tagline = "Computer Training Center", address = "House 12, Road 5, Mirpur, Dhaka", phone = "01711-000000"),
     )

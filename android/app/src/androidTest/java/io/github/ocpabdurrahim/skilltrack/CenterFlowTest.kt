@@ -57,6 +57,7 @@ class CenterFlowTest {
     @Test
     fun ownerSetsUpACenterAndAdmitsAStudent() {
         runBlocking { signInFresh("flow") }
+        approveSignedInUser()
 
         // Create the center.
         tapInList("create_center")

@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Button
@@ -53,6 +54,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.auth
 import io.github.ocpabdurrahim.skilltrack.BuildConfig
+import io.github.ocpabdurrahim.skilltrack.data.AppOwner
 import io.github.ocpabdurrahim.skilltrack.data.Center
 import io.github.ocpabdurrahim.skilltrack.data.CenterRef
 import io.github.ocpabdurrahim.skilltrack.data.Session
@@ -68,6 +70,8 @@ import io.github.ocpabdurrahim.skilltrack.ui.components.Screen
 import io.github.ocpabdurrahim.skilltrack.ui.components.SectionHeader
 import io.github.ocpabdurrahim.skilltrack.ui.components.SkillCard
 import io.github.ocpabdurrahim.skilltrack.ui.components.TextInput
+import io.github.ocpabdurrahim.skilltrack.ui.more.ApprovalsScreen
+import io.github.ocpabdurrahim.skilltrack.ui.more.PendingBadge
 import io.github.ocpabdurrahim.skilltrack.ui.theme.SkillTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -215,14 +219,25 @@ suspend fun emulatorSignIn(email: String, name: String = email.substringBefore('
 fun CenterPickerScreen(state: Session.Choosing) {
     val app = LocalApp.current
     var creating by rememberSaveable { mutableStateOf(false) }
+    var reviewing by rememberSaveable { mutableStateOf(false) }
+    val appOwner = AppOwner.isAppOwner(state.email)
     if (creating) {
-        CreateCenterScreen(email = state.email, onBack = { creating = false })
+        CreateCenterScreen(email = state.email, name = state.name, onBack = { creating = false })
+        return
+    }
+    if (reviewing) {
+        ApprovalsScreen(onBack = { reviewing = false })
         return
     }
     Screen(
         title = "Your centers",
         subtitle = state.email,
         actions = {
+            if (appOwner) {
+                IconButton(onClick = { reviewing = true }, modifier = Modifier.testTag("open_approvals")) {
+                    PendingBadge { Icon(Icons.Filled.HowToReg, contentDescription = "Center requests") }
+                }
+            }
             IconButton(onClick = { app.session.discover() }) { Icon(Icons.Filled.Refresh, contentDescription = "Look again") }
             TextButton(onClick = { app.session.signOut() }) { Text("Sign out") }
         },
@@ -242,7 +257,7 @@ fun CenterPickerScreen(state: Session.Choosing) {
                         "🏫",
                         "No center yet",
                         state.error?.let { "Couldn't check: $it" }
-                            ?: "If your center already uses SkillTrack, ask its owner to add ${state.email} under Staff, then tap ↻. Or create your own center.",
+                            ?: "If your center already uses SkillTrack, ask its owner to add ${state.email} under Staff, then tap ↻. To start your own center, tap the button below.",
                     )
                 }
                 else -> {
@@ -280,8 +295,9 @@ private fun CenterRow(c: CenterRef, onClick: () -> Unit) {
     }
 }
 
+/** The form itself; [CreateCenterScreen] shows it only to people allowed to create centers. */
 @Composable
-private fun CreateCenterScreen(email: String, onBack: () -> Unit) {
+internal fun CreateCenterForm(email: String, onBack: () -> Unit) {
     val app = LocalApp.current
     val scope = rememberCoroutineScope()
     var name by rememberSaveable { mutableStateOf("") }
